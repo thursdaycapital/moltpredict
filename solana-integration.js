@@ -1,269 +1,201 @@
 /**
- * MoltPredict - Solana Integration Module
+ * MoltPredict - Simple Solana Integration
  * 
- * Cross-chain capabilities for payment processing, reputation tracking,
- * and settlements via Jupiter DEX and Solana blockchain.
- * 
- * @version 1.0.0
- * @date 2026-02-03
+ * Uses Solana's existing infrastructure without custom program deployment.
+ * Works with any Solana wallet and Jupiter DEX.
  */
 
 import { Connection, PublicKey, Transaction, SystemProgram, Keypair } from '@solana/web3.js';
-import { JUPITER_API } from './config.js';
 
 // Configuration
 const SOLANA_RPC = process.env.SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
-const SOLANA_PAYMENT_WALLET = process.env.SOLANA_PAYMENT_WALLET;
+const JUPITER_API = 'https://api.jup.ag/solana/v1';
 
 // Initialize connection
 const connection = new Connection(SOLANA_RPC, 'confirmed');
 
 /**
- * Get SOL balance for an address
- * @param {string} address - Solana wallet address
- * @returns {Promise<number>} Balance in SOL
+ * Agent Reputation - Stored locally (simulates Solana PDA)
+ * In production, this would use real Solana PDAs
  */
-export async function getSOLBalance(address) {
-    try {
-        const pubkey = new PublicKey(address);
-        const balance = await connection.getBalance(pubkey);
-        return balance / 1e9; // Convert lamports to SOL
-    } catch (error) {
-        console.error('Error getting SOL balance:', error);
-        return 0;
-    }
-}
+const agentReputation = new Map();
 
 /**
- * Get USDC balance for an address
- * @param {string} address - Solana wallet address
- * @returns {Promise<number>} Balance in USDC
+ * Initialize agent reputation
+ * @param {string} agentId - Unique agent identifier
+ * @param {string} walletAddress - Solana wallet for rewards
  */
-export async function getUSDCBalance(address) {
-    try {
-        const pubkey = new PublicKey(address);
-        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(pubkey, {
-            mint: new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
-        });
-        
-        if (tokenAccounts.value.length === 0) return 0;
-        
-        return tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-    } catch (error) {
-        console.error('Error getting USDC balance:', error);
-        return 0;
-    }
-}
-
-/**
- * Transfer SOL
- * @param {string} from - Sender private key (WIF or base58)
- * @param {string} to - Recipient address
- * @param {number} amount - Amount in SOL
- * @returns {Promise<object>} Transaction result
- */
-export async function transferSOL(from, to, amount) {
-    try {
-        const fromKeypair = Keypair.fromSecretKey(
-            Buffer.from(from, 'base58')
-        );
-        
-        const transaction = new Transaction().add(
-            SystemProgram.transfer({
-                fromPubkey: fromKeypair.publicKey,
-                toPubkey: new PublicKey(to),
-                lamports: amount * 1e9
-            })
-        );
-        
-        const signature = await connection.sendTransaction(transaction, [fromKeypair]);
-        await connection.confirmTransaction(signature);
-        
-        return {
-            success: true,
-            signature,
-            amount,
-            chain: 'solana'
-        };
-    } catch (error) {
-        console.error('Error transferring SOL:', error);
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-}
-
-/**
- * Get USDC price from Jupiter API
- * @returns {Promise<number>} USDC price in USD
- */
-export async function getUSDCPrice() {
-    try {
-        const response = await fetch(`${JUPITER_API}/price?ids=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`);
-        const data = await response.json();
-        return data.data?.price || 1.0;
-    } catch (error) {
-        console.error('Error getting USDC price:', error);
-        return 1.0;
-    }
-}
-
-/**
- * Swap SOL to USDC via Jupiter
- * @param {string} privateKey - Wallet private key
- * @param {number} amount - Amount in SOL
- * @returns {Promise<object>} Swap result
- */
-export async function swapSOLtoUSDC(privateKey, amount) {
-    try {
-        // This is a simplified version - full implementation would use Jupiter SDK
-        const quoteResponse = await fetch(
-            `${JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${amount * 1e9}`
-        );
-        const quote = await quoteResponse.json();
-        
-        return {
-            success: true,
-            inputAmount: amount,
-            outputAmount: quote.outAmount / 1e6,
-            route: quote.routeId
-        };
-    } catch (error) {
-        console.error('Error swapping:', error);
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-}
-
-/**
- * Create or update agent reputation on Solana
- * @param {string} agentId - AI agent identifier
- * @param {object} data - Reputation data
- * @returns {Promise<object>} Result
- */
-export async function updateAgentReputation(agentId, data) {
-    const reputationData = {
-        agentId,
-        totalPredictions: data.totalPredictions || 0,
-        correctPredictions: data.correctPredictions || 0,
-        reputationScore: data.reputationScore || 0,
-        lastUpdated: Date.now()
-    };
-    
-    // In production, this would write to a Solana PDA
-    // For demo, we store locally
-    return {
-        success: true,
-        data: reputationData,
-        chain: 'solana',
-        note: 'PDA write would happen here in production'
-    };
-}
-
-/**
- * Get agent reputation from Solana
- * @param {string} agentId - AI agent identifier
- * @returns {Promise<object>} Reputation data
- */
-export async function getAgentReputation(agentId) {
-    // In production, this would read from a Solana PDA
-    return {
-        agentId,
+export async function initAgent(agentId, walletAddress) {
+    agentReputation.set(agentId, {
+        wallet: walletAddress,
         totalPredictions: 0,
         correctPredictions: 0,
         reputationScore: 0,
-        accuracy: 0,
-        rank: 'N/A'
-    };
-}
-
-/**
- * Cross-chain settlement between Monad and Solana
- * @param {object} params - Settlement parameters
- * @returns {Promise<object>} Settlement result
- */
-export async function crossChainSettlement({ predictionId, winner, payout, sourceChain }) {
-    const settlement = {
-        predictionId,
-        winner,
-        payout,
-        sourceChain, // 'monad' or 'solana'
-        targetChain: sourceChain === 'monad' ? 'solana' : 'monad',
-        status: 'pending',
-        timestamp: Date.now()
-    };
+        createdAt: Date.now()
+    });
     
-    // In production, this would use Wormhole or another bridge
-    // For demo, we simulate the settlement
-    
-    return {
-        ...settlement,
-        status: 'completed',
-        bridge: 'wormhole-simulated',
-        txHash: `0x${Buffer.from(settlement).toString('hex').slice(0, 64)}`
-    };
-}
-
-/**
- * Distribute rewards to winning AI agents
- * @param {string} agentId - Winning agent
- * @param {number} amount - Reward amount
- * @param {string} token - Token type (MON, USDC, SOL)
- * @returns {Promise<object>} Distribution result
- */
-export async function distributeReward(agentId, amount, token = 'MON') {
     return {
         success: true,
         agentId,
-        amount,
-        token,
-        timestamp: Date.now(),
-        note: 'Reward distributed on-chain'
+        wallet: walletAddress,
+        message: 'Agent registered on Solana (local simulation)'
     };
+}
+
+/**
+ * Update agent prediction result
+ * @param {string} agentId - Agent identifier
+ * @param {boolean} isCorrect - Whether prediction was correct
+ */
+export async function recordPrediction(agentId, isCorrect) {
+    const agent = agentReputation.get(agentId);
+    
+    if (!agent) {
+        return { success: false, error: 'Agent not found' };
+    }
+    
+    agent.totalPredictions++;
+    if (isCorrect) {
+        agent.correctPredictions++;
+    }
+    
+    // Calculate reputation score (0-100)
+    agent.reputationScore = Math.round(
+        (agent.correctPredictions / agent.totalPredictions) * 100
+    );
+    
+    return {
+        success: true,
+        agentId,
+        totalPredictions: agent.totalPredictions,
+        correctPredictions: agent.correctPredictions,
+        reputationScore: agent.reputationScore
+    };
+}
+
+/**
+ * Get agent reputation
+ * @param {string} agentId - Agent identifier
+ */
+export async function getAgentReputation(agentId) {
+    const agent = agentReputation.get(agentId);
+    
+    if (!agent) {
+        return {
+            success: false,
+            error: 'Agent not found',
+            reputationScore: 0
+        };
+    }
+    
+    return {
+        success: true,
+        agentId,
+        wallet: agent.wallet,
+        totalPredictions: agent.totalPredictions,
+        correctPredictions: agent.correctPredictions,
+        reputationScore: agent.reputationScore,
+        accuracy: Math.round((agent.correctPredictions / agent.totalPredictions) * 100) + '%'
+    };
+}
+
+/**
+ * Get SOL price from Jupiter
+ */
+export async function getSOLPrice() {
+    try {
+        const response = await fetch(`${JUPITER_API}/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=1000000000`);
+        const data = await response.json();
+        return data.outAmount / 1000000; // USDC
+    } catch (error) {
+        console.error('Error getting SOL price:', error);
+        return 100; // Fallback
+    }
+}
+
+/**
+ * Get USDC price
+ */
+export async function getUSDCPrice() {
+    return 1.0; // USDC is $1
+}
+
+/**
+ * Jupiter swap quote (read-only)
+ * @param {string} inputMint - Input token address
+ * @param {string} outputMint - Output token address
+ * @param {number} amount - Amount in smallest units
+ */
+export async function getSwapQuote(inputMint, outputMint, amount) {
+    try {
+        const response = await fetch(
+            `${JUPITER_API}/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}`
+        );
+        const data = await response.json();
+        return {
+            success: true,
+            inputAmount: data.inAmount / Math.pow(10, data.inputMintDecimals),
+            outputAmount: data.outAmount / Math.pow(10, data.outputMintDecimals),
+            priceImpact: data.priceImpactPct,
+            route: data.routeId
+        };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
 }
 
 /**
  * Get market statistics
- * @returns {Promise<object>} Market stats
  */
-export async function getMarketStats() {
-    try {
-        const [solPrice, usdcPrice] = await Promise.all([
-            getUSDCPrice(),
-            Promise.resolve(1.0)
-        ]);
-        
-        return {
-            solPrice,
-            usdcPrice,
-            totalVolume: 0,
-            activeMarkets: 1,
-            totalTraders: 1
-        };
-    } catch (error) {
-        console.error('Error getting stats:', error);
-        return {
-            solPrice: 100,
-            usdcPrice: 1,
-            totalVolume: 0,
-            activeMarkets: 1,
-            totalTraders: 1
-        };
+export async function getStats() {
+    const solPrice = await getSOLPrice();
+    const agents = Array.from(agentReputation.values());
+    
+    return {
+        success: true,
+        stats: {
+            totalAgents: agents.length,
+            totalPredictions: agents.reduce((sum, a) => sum + a.totalPredictions, 0),
+            averageReputation: agents.length > 0 
+                ? Math.round(agents.reduce((sum, a) => sum + a.reputationScore, 0) / agents.length)
+                : 0,
+            solPrice: solPrice,
+            usdcPrice: 1.0
+        }
+    };
+}
+
+/**
+ * Simulate reward distribution
+ * @param {string} agentId - Winning agent
+ * @param {number} amount - Reward amount in USDC
+ */
+export async function distributeReward(agentId, amount) {
+    const agent = agentReputation.get(agentId);
+    
+    if (!agent) {
+        return { success: false, error: 'Agent not found' };
     }
+    
+    // Simulate on-chain transaction
+    return {
+        success: true,
+        agentId,
+        wallet: agent.wallet,
+        amount,
+        token: 'USDC',
+        txId: 'simulated_' + Date.now(),
+        note: 'In production, this would be a real Solana transaction'
+    };
 }
 
 export default {
-    getSOLBalance,
-    getUSDCBalance,
-    transferSOL,
-    getUSDCPrice,
-    swapSOLtoUSDC,
-    updateAgentReputation,
+    initAgent,
+    recordPrediction,
     getAgentReputation,
-    crossChainSettlement,
+    getSwapQuote,
+    getStats,
     distributeReward,
-    getMarketStats
+    getSOLPrice,
+    getUSDCPrice
 };
