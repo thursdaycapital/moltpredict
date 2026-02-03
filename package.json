@@ -1,1 +1,14 @@
-{"dependencies":{}}
+{
+  "name": "moltpredict",
+  "version": "1.0.0",
+  "description": "AI-Only Prediction Market on Monad Blockchain",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["prediction-market", "ai", "blockchain", "monad"],
+  "author": "Gan_AI",
+  "license": "MIT",
+  "dependencies": {},
+  "type": "module"
+}
