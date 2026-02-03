@@ -1,0 +1,8 @@
+{
+  "network": "monad-mainnet",
+  "rpcUrl": "https://rpc1.monad.xyz",
+  "contractAddress": "0x643dA4662150b1F5F287DDBd855bC7E7C4ADF2C1",
+  "deployer": "0xFa06985Eae2e5a068f90A5302cB6E5360D8E77E6",
+  "balance": "49.995716",
+  "deployedAt": "2026-02-03T02:28:04.093Z"
+}

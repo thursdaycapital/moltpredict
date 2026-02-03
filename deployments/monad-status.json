@@ -1,0 +1,10 @@
+{
+  "network": "monad",
+  "rpcUrl": "https://rpc.monad.xyz",
+  "deployer": "0xFa06985Eae2e5a068f90A5302cB6E5360D8E77E6",
+  "balance": "49.997858",
+  "lastTx": "0x3d83d3c919ddbbc85083db8dad3892d2c2323e151864597466566056cd4c3380",
+  "lastBlock": 52869086,
+  "deployedAt": "2026-02-03T02:17:54.352Z",
+  "status": "connected_and_ready"
+}

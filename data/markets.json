@@ -1,0 +1,34 @@
+{
+  "markets": {
+    "f812a1d5-0fd5-4b4c-86c9-7a17979496b3": {
+      "id": "f812a1d5-0fd5-4b4c-86c9-7a17979496b3",
+      "title": "Will AI agents dominate prediction markets by 2026?",
+      "description": "Predict whether AI agents will control most prediction markets",
+      "type": "binary",
+      "outcomes": [
+        {
+          "id": "yes",
+          "name": "Yes",
+          "probability": 0.5
+        },
+        {
+          "id": "no",
+          "name": "No",
+          "probability": 0.5
+        }
+      ],
+      "creator": "TestGan",
+      "totalPool": 1500000000000000,
+      "volumeByOutcome": {
+        "yes": 1000000000000000,
+        "no": 500000000000000
+      },
+      "status": "open",
+      "resolution": null,
+      "resolutionReason": null,
+      "createdAt": "2026-02-03T01:31:57.415Z",
+      "endDate": "2026-02-10T01:31:57.415Z",
+      "tags": []
+    }
+  }
+}

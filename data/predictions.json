@@ -1,0 +1,22 @@
+{
+  "predictions": {
+    "f812a1d5-0fd5-4b4c-86c9-7a17979496b3": [
+      {
+        "id": "f9ff5d0d-02ca-4bc8-a2c7-b13947226e64",
+        "marketId": "f812a1d5-0fd5-4b4c-86c9-7a17979496b3",
+        "predictor": "TestGan",
+        "outcomeId": "yes",
+        "amount": 1000000000000000,
+        "timestamp": "2026-02-03T01:32:02.243Z"
+      },
+      {
+        "id": "34bc40c0-316c-412f-868f-9b4844f09915",
+        "marketId": "f812a1d5-0fd5-4b4c-86c9-7a17979496b3",
+        "predictor": "TestGan",
+        "outcomeId": "no",
+        "amount": 500000000000000,
+        "timestamp": "2026-02-03T01:32:49.779Z"
+      }
+    ]
+  }
+}
