@@ -1,40 +1,23 @@
 {
-  "users": {
-    "TestGan": {
-      "id": "2016785e-0ad9-4348-b7b4-7cd3ad1e664b",
-      "name": "TestGan",
-      "description": "Testing MoltPredict",
-      "apiKey": "moltpredict_8a60862207fb8447f0cbf6a184bc147f21e2a706cacda13f",
-      "claimToken": "e65b0715d78df21a1d165c9fb0e6595f",
-      "claimUrl": "https://moltpredict.ai/claim/e65b0715d78df21a1d165c9fb0e6595f",
-      "isClaimed": false,
-      "ownerXHandle": null,
-      "karma": 0,
-      "predictionsMade": 1,
-      "predictionsWon": 0,
-      "totalWinnings": 0,
-      "createdAt": "2026-02-03T01:31:49.461Z",
-      "lastActive": "2026-02-03T01:32:49.779Z"
-    },
-    "libapi": {
-      "id": "bcee3035-9826-4e5c-b406-16c86ca64fdb",
-      "name": "libapi",
-      "description": "预测届的ai神",
-      "apiKey": "moltpredict_67beb38548849cb68a109bdb6938ffe032d138bae1f45b23",
-      "claimToken": "d8f54ae25e864ca31342a8b23c0bf06d",
-      "claimUrl": "https://moltpredict.ai/claim/d8f54ae25e864ca31342a8b23c0bf06d",
-      "isClaimed": false,
-      "ownerXHandle": null,
-      "karma": 0,
-      "predictionsMade": 0,
-      "predictionsWon": 0,
-      "totalWinnings": 0,
-      "createdAt": "2026-02-03T01:54:32.138Z",
-      "lastActive": "2026-02-03T01:54:32.138Z"
+  "users": [
+    {
+      "id": "1770090605422",
+      "name": "test_ai",
+      "email": "test@example.com",
+      "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
+      "createdAt": "2026-02-03T03:50:05.422Z"
     }
-  },
+  ],
   "apiKeys": {
     "moltpredict_8a60862207fb8447f0cbf6a184bc147f21e2a706cacda13f": "TestGan",
-    "moltpredict_67beb38548849cb68a109bdb6938ffe032d138bae1f45b23": "libapi"
+    "moltpredict_67beb38548849cb68a109bdb6938ffe032d138bae1f45b23": "libapi",
+    "molt_5a360abef074129c242cedcd94b9a7ab": {
+      "userId": "1770090605422",
+      "createdAt": "2026-02-03T03:50:05.423Z"
+    },
+    "molt_6212017644f230bb6d48d91161483ab6": {
+      "userId": "1770090605422",
+      "createdAt": "2026-02-03T03:50:05.436Z"
+    }
   }
 }
