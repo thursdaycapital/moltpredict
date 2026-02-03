@@ -1,21 +1,17 @@
 /**
- * MoltPredict API Server
+ * MoltPredict API Server - Vercel Compatible
  */
 
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
 
-// Load CommonJS modules
+// Import modules
 import * as auth from './api/auth.js';
 import * as markets from './api/markets.js';
-
-const PORT = process.env.PORT || 3000;
 
 const MIME_TYPES = {
     '.html': 'text/html',
@@ -38,22 +34,14 @@ async function parseBody(req) {
 function sendJson(res, data, status = 200) {
     res.writeHead(status, { 
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+        'Access-Control-Allow-Origin': '*'
     });
     res.end(JSON.stringify(data));
 }
 
-async function handleApi(req, res) {
-    const url = new URL(req.url, `http://localhost:${PORT}`);
+async function handleApi(req, res, url) {
     const pathname = url.pathname;
     const method = req.method;
-    
-    if (method === 'OPTIONS') {
-        res.writeHead(204, { 'Access-Control-Allow-Origin': '*' });
-        res.end();
-        return;
-    }
     
     // Auth routes
     if (pathname === '/api/auth/register' && method === 'POST') {
@@ -93,11 +81,11 @@ async function handleApi(req, res) {
     sendJson(res, { error: 'Not found' }, 404);
 }
 
-function serveStatic(req, res) {
-    let url = new URL(req.url, `http://localhost:${PORT}`).pathname;
-    if (url === '/') url = '/index.html';
+function serveStatic(req, res, url) {
+    let urlPath = url.pathname;
+    if (urlPath === '/') urlPath = '/index.html';
     
-    const filePath = path.join(__dirname, 'web', url);
+    const filePath = path.join(__dirname, 'web', urlPath);
     const ext = path.extname(filePath);
     
     fs.readFile(filePath, (err, data) => {
@@ -111,27 +99,82 @@ function serveStatic(req, res) {
     });
 }
 
-const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url, `http://localhost:${PORT}`);
+// For local development
+if (process.env.VERCEL !== '1') {
+    const server = http.createServer(async (req, res) => {
+        const url = new URL(req.url, `http://localhost:${process.env.PORT || 3000}`);
+        if (url.pathname.startsWith('/api/')) {
+            await handleApi(req, res, url);
+        } else {
+            serveStatic(req, res, url);
+        }
+    });
+    
+    server.listen(3000, () => {
+        console.log('🦞 MoltPredict running on http://localhost:3000');
+    });
+}
+
+// Export for Vercel serverless
+export default async function handler(req, res) {
+    const url = new URL(req.url, `https://${req.headers.host}`);
+    
     if (url.pathname.startsWith('/api/')) {
-        await handleApi(req, res);
+        // Handle API
+        const mockReq = { method: req.method };
+        const mockRes = {
+            writeHead: (status, headers) => {
+                res.set(headers);
+                res.status(status);
+            },
+            end: (data) => res.send(data)
+        };
+        
+        try {
+            if (req.method === 'POST') {
+                const body = req.body;
+                // Mock body parsing
+                mockReq.body = body || {};
+            }
+            
+            if (url.pathname === '/api/auth/register' && req.method === 'POST') {
+                res.json(auth.register(req.body));
+                return;
+            }
+            if (url.pathname === '/api/auth/login' && req.method === 'POST') {
+                res.json(auth.login(req.body));
+                return;
+            }
+            if (url.pathname === '/api/auth/verify' && req.method === 'POST') {
+                res.json(auth.verify(req.body));
+                return;
+            }
+            if (url.pathname === '/api/markets' && req.method === 'GET') {
+                res.json(markets.list());
+                return;
+            }
+            if (url.pathname === '/api/stats' && req.method === 'GET') {
+                res.json(markets.stats());
+                return;
+            }
+            res.status(404).json({ error: 'Not found' });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     } else {
-        serveStatic(req, res);
+        // Serve static files
+        let urlPath = url.pathname;
+        if (urlPath === '/') urlPath = '/index.html';
+        
+        const filePath = path.join(__dirname, 'web', urlPath);
+        const ext = path.extname(filePath);
+        
+        try {
+            const data = fs.readFileSync(filePath);
+            res.set('Content-Type', MIME_TYPES[ext] || 'application/octet-stream');
+            res.send(data);
+        } catch (e) {
+            res.status(404).send('Not found');
+        }
     }
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-🦞 MoltPredict - AI Prediction Market
-=====================================
-📍 Server: http://localhost:${PORT}
-🌐 Web:   http://localhost:${PORT}/index.html
-
-💰 Prediction Market for AI Agents
-   - Register AI agents
-   - Create markets
-   - Place bets and win MON!
-
-=====================================
-    `);
-});
+}
